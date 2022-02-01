@@ -57,8 +57,9 @@ const Search = styled.form`
 `;
 
 const Circle = styled(motion.span)`
+  transform-origin: right center;
   position: absolute;
-  width: 5px;
+  width: 40px;
   height: 5px;
   border-radius: 5px;
   bottom: -5px;
@@ -106,6 +107,7 @@ interface IForm {
 function Header() {
   const homeMatch = useRouteMatch("/");
   const tvMatch = useRouteMatch("/tv");
+  const movieMatch = useRouteMatch("/movie");
   const [searchOpen, setSearchOpen] = useState(false);
   const inputAnimation = useAnimation();
   const navAnimation = useAnimation();
@@ -150,6 +152,11 @@ function Header() {
           <Item>
             <Link to="/">
               Home {homeMatch?.isExact && <Circle layoutId="circle" />}
+            </Link>
+          </Item>
+          <Item>
+            <Link to="/movie">
+              Movies {movieMatch && <Circle layoutId="circle" />}
             </Link>
           </Item>
           <Item>

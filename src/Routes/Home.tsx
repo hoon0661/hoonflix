@@ -1,52 +1,72 @@
 import { useQuery } from "react-query";
 import styled from "styled-components";
 import { motion, AnimatePresence, useViewportScroll } from "framer-motion";
-import { getMovies, IGetMoviesResult } from "../api";
+import {
+  getAllTrendingDaily,
+  getAllTrendingWeekly,
+  getMovies,
+  IGetMoviesResult,
+} from "../api";
 import { makeImagePath } from "./utils";
 import { useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faChevronLeft,
+  faChevronRight,
+} from "@fortawesome/free-solid-svg-icons";
+
 const Wrapper = styled.div`
   background: black;
   padding-bottom: 200px;
 `;
+
 const Loader = styled.div`
   height: 20vh;
   display: flex;
   justify-content: center;
   align-items: center;
 `;
-const Banner = styled.div<{ bgPhoto: string }>`
+
+const Banner = styled.div<{ bgphoto: string }>`
   height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 60px;
   background-image: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 1)),
-    url(${(props) => props.bgPhoto});
+    url(${(props) => props.bgphoto});
   background-size: cover;
 `;
+
 const Title = styled.h2`
   font-size: 68px;
   margin-bottom: 20px; ;
 `;
+
 const Overview = styled.p`
   font-size: 30px;
   width: 50%;
 `;
+
 const Slider = styled.div`
   position: relative;
+  display: flex;
+  justify-content: center;
   top: -100px;
 `;
+
 const Row = styled(motion.div)`
   display: grid;
   gap: 5px;
   grid-template-columns: repeat(6, 1fr);
   position: absolute;
-  width: 100%;
+  width: 95%;
 `;
-const Box = styled(motion.div)<{ bgPhoto: string }>`
+
+const Box = styled(motion.div)<{ bgphoto: string }>`
   background-color: white;
-  background-image: url(${(props) => props.bgPhoto});
+  background-image: url(${(props) => props.bgphoto});
   background-size: cover;
   background-position: center center;
   height: 200px;
@@ -59,6 +79,7 @@ const Box = styled(motion.div)<{ bgPhoto: string }>`
     transform-origin: center right;
   }
 `;
+
 const Info = styled(motion.div)`
   padding: 10px;
   background-color: ${(props) => props.theme.black.lighter};
@@ -99,6 +120,7 @@ const BigCover = styled.div`
   background-position: center center;
   height: 400px;
 `;
+
 const BigTitle = styled.h3`
   color: ${(props) => props.theme.white.lighter};
   padding: 20px;
@@ -109,22 +131,39 @@ const BigTitle = styled.h3`
 
 const BigOverview = styled.p`
   padding: 20px;
-  color: ${(props) => props.theme.white.lighter};
   position: relative;
   top: -80px;
+  color: ${(props) => props.theme.white.lighter};
+`;
+
+const SlideButton = styled.div<{ isLeft: boolean }>`
+  background-color: rgba(0, 0, 0, 0.3);
+  color: ${(props) => props.theme.white.darker};
+  width: 2.5%;
+  height: 200px;
+  position: absolute;
+  ${(props) => (props.isLeft ? { left: 0 } : { right: 0 })}
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  &:hover {
+    color: ${(props) => props.theme.black.lighter};
+  }
 `;
 
 const rowVariants = {
-  hidden: {
-    x: window.outerWidth + 5,
-  },
-  visible: {
+  entry: (goingBack: boolean) => ({
+    x: goingBack ? -window.innerWidth - 5 : window.innerWidth + 5,
+  }),
+  center: {
     x: 0,
   },
-  exit: {
-    x: -window.outerWidth - 5,
-  },
+  exit: (goingBack: boolean) => ({
+    x: goingBack ? window.innerWidth + 5 : -window.innerWidth - 5,
+  }),
 };
+
 const boxVariants = {
   normal: {
     scale: 1,
@@ -139,6 +178,7 @@ const boxVariants = {
     },
   },
 };
+
 const infoVariants = {
   hover: {
     opacity: 1,
@@ -149,24 +189,44 @@ const infoVariants = {
     },
   },
 };
+
 const offset = 6;
+
 function Home() {
   const history = useHistory();
   const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId");
   const { scrollY } = useViewportScroll();
-  const { data, isLoading } = useQuery<IGetMoviesResult>(
-    ["movies", "nowPlaying"],
-    getMovies
+  const { data: weekly, isLoading: isLoadingWeekly } =
+    useQuery<IGetMoviesResult>(["weekly", "trending"], getAllTrendingWeekly);
+  const { data: daily, isLoading: isLoadingDaily } = useQuery<IGetMoviesResult>(
+    ["daily", "trending"],
+    getAllTrendingDaily
   );
-  const [index, setIndex] = useState(0);
+  const [indexWeekly, setIndexWeekly] = useState(0);
+  const [indexDaily, setIndexDaily] = useState(0);
   const [leaving, setLeaving] = useState(false);
-  const incraseIndex = () => {
-    if (data) {
+  const [goingBack, setGoingBack] = useState(false);
+  const changeIndex = (back: boolean, isWeekly: boolean) => {
+    if (weekly) {
       if (leaving) return;
       toggleLeaving();
-      const totalMovies = data.results.length - 1;
+      const totalMovies = weekly.results.length - 1;
       const maxIndex = Math.floor(totalMovies / offset) - 1;
-      setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+      if (!back) {
+        setGoingBack(false);
+        if (isWeekly) {
+          setIndexWeekly((prev) => (prev === maxIndex ? 0 : prev + 1));
+        } else {
+          setIndexDaily((prev) => (prev === maxIndex ? 0 : prev + 1));
+        }
+      } else {
+        setGoingBack(true);
+        if (isWeekly) {
+          setIndexWeekly((prev) => (prev === 0 ? maxIndex : prev - 1));
+        } else {
+          setIndexDaily((prev) => (prev === 0 ? maxIndex : prev - 1));
+        }
+      }
     }
   };
   const toggleLeaving = () => setLeaving((prev) => !prev);
@@ -176,45 +236,53 @@ function Home() {
   const onOverlayClick = () => history.push("/");
   const clickedMovie =
     bigMovieMatch?.params.movieId &&
-    data?.results.find(
-      (movie) => String(movie.id) === bigMovieMatch.params.movieId
-    );
+    weekly?.results.find((movie) => movie.id === +bigMovieMatch.params.movieId);
   return (
     <Wrapper>
-      {isLoading ? (
+      {isLoadingWeekly ? (
         <Loader>Loading...</Loader>
       ) : (
         <>
           <Banner
-            onClick={incraseIndex}
-            bgPhoto={makeImagePath(data?.results[0].backdrop_path || "")}
+            bgphoto={makeImagePath(weekly?.results[0].backdrop_path || "")}
           >
-            <Title>{data?.results[0].title}</Title>
-            <Overview>{data?.results[0].overview}</Overview>
+            <Title>{weekly?.results[0].title}</Title>
+            <Overview>{weekly?.results[0].overview}</Overview>
           </Banner>
           <Slider>
-            <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
+            <AnimatePresence
+              initial={false}
+              onExitComplete={toggleLeaving}
+              custom={goingBack}
+            >
+              <SlideButton
+                isLeft={true}
+                onClick={() => changeIndex(true, true)}
+              >
+                <FontAwesomeIcon icon={faChevronLeft} size="2x" />
+              </SlideButton>
               <Row
+                custom={goingBack}
                 variants={rowVariants}
-                initial="hidden"
-                animate="visible"
+                initial="entry"
+                animate="center"
                 exit="exit"
                 transition={{ type: "tween", duration: 1 }}
-                key={index}
+                key={indexWeekly}
               >
-                {data?.results
+                {weekly?.results
                   .slice(1)
-                  .slice(offset * index, offset * index + offset)
+                  .slice(offset * indexWeekly, offset * indexWeekly + offset)
                   .map((movie) => (
                     <Box
-                      layoutId={movie.id + ""}
-                      key={movie.id}
+                      layoutId={movie.id + "weekly"}
+                      key={movie.id + "weekly"}
                       whileHover="hover"
                       initial="normal"
                       variants={boxVariants}
                       onClick={() => onBoxClicked(movie.id)}
                       transition={{ type: "tween" }}
-                      bgPhoto={makeImagePath(movie.backdrop_path, "w500")}
+                      bgphoto={makeImagePath(movie.backdrop_path, "w500")}
                     >
                       <Info variants={infoVariants}>
                         <h4>{movie.title}</h4>
@@ -222,8 +290,15 @@ function Home() {
                     </Box>
                   ))}
               </Row>
+              <SlideButton
+                isLeft={false}
+                onClick={() => changeIndex(false, true)}
+              >
+                <FontAwesomeIcon icon={faChevronRight} size="2x" />
+              </SlideButton>
             </AnimatePresence>
           </Slider>
+
           <AnimatePresence>
             {bigMovieMatch ? (
               <>
