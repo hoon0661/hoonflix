@@ -4,7 +4,9 @@ import { motion, AnimatePresence, useViewportScroll } from "framer-motion";
 import {
   getAllTrendingDaily,
   getAllTrendingWeekly,
+  getMovieDetail,
   getMovies,
+  IGetMovieDetail,
   IGetMoviesResult,
 } from "../api";
 import { makeImagePath } from "./utils";
@@ -15,6 +17,7 @@ import {
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
+import Detail from "../Components/Detail";
 
 const Wrapper = styled.div`
   background: black;
@@ -54,6 +57,10 @@ const Slider = styled.div`
   display: flex;
   justify-content: center;
   top: -100px;
+  margin-bottom: 300px;
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const Row = styled(motion.div)`
@@ -152,6 +159,16 @@ const SlideButton = styled.div<{ isLeft: boolean }>`
   }
 `;
 
+const Subheader = styled.div`
+  background-color: transparent;
+  color: ${(props) => props.theme.white.lighter};
+  padding-left: 2.5%;
+  width: 100%;
+  position: relative;
+  bottom: 35px;
+  font-size: 24px;
+`;
+
 const rowVariants = {
   entry: (goingBack: boolean) => ({
     x: goingBack ? -window.innerWidth - 5 : window.innerWidth + 5,
@@ -206,6 +223,7 @@ function Home() {
   const [indexDaily, setIndexDaily] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const [goingBack, setGoingBack] = useState(false);
+  const [dataType, setDataType] = useState("");
   const changeIndex = (back: boolean, isWeekly: boolean) => {
     if (weekly) {
       if (leaving) return;
@@ -230,16 +248,23 @@ function Home() {
     }
   };
   const toggleLeaving = () => setLeaving((prev) => !prev);
-  const onBoxClicked = (movieId: number) => {
+  const onBoxClicked = (movieId: number, dataType: string) => {
+    setDataType(dataType);
     history.push(`/movies/${movieId}`);
   };
   const onOverlayClick = () => history.push("/");
   const clickedMovie =
     bigMovieMatch?.params.movieId &&
-    weekly?.results.find((movie) => movie.id === +bigMovieMatch.params.movieId);
+    (weekly?.results.find(
+      (movie) => movie.id === +bigMovieMatch.params.movieId
+    ) ||
+      daily?.results.find(
+        (movie) => movie.id === +bigMovieMatch.params.movieId
+      ));
+
   return (
     <Wrapper>
-      {isLoadingWeekly ? (
+      {isLoadingWeekly || isLoadingDaily ? (
         <Loader>Loading...</Loader>
       ) : (
         <>
@@ -249,13 +274,16 @@ function Home() {
             <Title>{weekly?.results[0].title}</Title>
             <Overview>{weekly?.results[0].overview}</Overview>
           </Banner>
+
           <Slider>
+            <Subheader>Weekly Trending</Subheader>
             <AnimatePresence
               initial={false}
               onExitComplete={toggleLeaving}
               custom={goingBack}
             >
               <SlideButton
+                key="leftButton"
                 isLeft={true}
                 onClick={() => changeIndex(true, true)}
               >
@@ -280,7 +308,7 @@ function Home() {
                       whileHover="hover"
                       initial="normal"
                       variants={boxVariants}
-                      onClick={() => onBoxClicked(movie.id)}
+                      onClick={() => onBoxClicked(movie.id, "weekly")}
                       transition={{ type: "tween" }}
                       bgphoto={makeImagePath(movie.backdrop_path, "w500")}
                     >
@@ -291,8 +319,62 @@ function Home() {
                   ))}
               </Row>
               <SlideButton
+                key="rightButton"
                 isLeft={false}
                 onClick={() => changeIndex(false, true)}
+              >
+                <FontAwesomeIcon icon={faChevronRight} size="2x" />
+              </SlideButton>
+            </AnimatePresence>
+          </Slider>
+
+          <Slider>
+            <Subheader>Daily Trending</Subheader>
+            <AnimatePresence
+              initial={false}
+              onExitComplete={toggleLeaving}
+              custom={goingBack}
+            >
+              <SlideButton
+                key="leftButton"
+                isLeft={true}
+                onClick={() => changeIndex(true, false)}
+              >
+                <FontAwesomeIcon icon={faChevronLeft} size="2x" />
+              </SlideButton>
+              <Row
+                custom={goingBack}
+                variants={rowVariants}
+                initial="entry"
+                animate="center"
+                exit="exit"
+                transition={{ type: "tween", duration: 1 }}
+                key={indexDaily}
+              >
+                {daily?.results
+                  .slice(1)
+                  .slice(offset * indexDaily, offset * indexDaily + offset)
+                  .map((movie) => (
+                    <Box
+                      layoutId={movie.id + "daily"}
+                      key={movie.id + "daily"}
+                      whileHover="hover"
+                      initial="normal"
+                      variants={boxVariants}
+                      onClick={() => onBoxClicked(movie.id, "daily")}
+                      transition={{ type: "tween" }}
+                      bgphoto={makeImagePath(movie.backdrop_path, "w500")}
+                    >
+                      <Info variants={infoVariants}>
+                        <h4>{movie.title}</h4>
+                      </Info>
+                    </Box>
+                  ))}
+              </Row>
+              <SlideButton
+                key="rightButton"
+                isLeft={false}
+                onClick={() => changeIndex(false, false)}
               >
                 <FontAwesomeIcon icon={faChevronRight} size="2x" />
               </SlideButton>
@@ -309,7 +391,7 @@ function Home() {
                 />
                 <BigMovie
                   style={{ top: scrollY.get() + 100 }}
-                  layoutId={bigMovieMatch.params.movieId}
+                  layoutId={bigMovieMatch.params.movieId + dataType}
                 >
                   {clickedMovie && (
                     <>
