@@ -1,65 +1,29 @@
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { spawn } from "child_process";
-import { AnimatePresence, motion, useViewportScroll } from "framer-motion";
 import { useQuery } from "react-query";
-import { useHistory, useRouteMatch } from "react-router-dom";
+import { useRouteMatch } from "react-router-dom";
 import styled from "styled-components";
 import {
   getMovieDetail,
-  getTvDetail,
+  getVideoForMovie,
   IGetMovieDetail,
-  IGetTvDetail,
+  IGetVideos,
 } from "../api";
 import { makeImagePath } from "../Routes/utils";
-
-const BigMovie = styled(motion.div)`
-  position: absolute;
-  width: 40vw;
-  height: 80vh;
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-  border-radius: 15px;
-  overflow: hidden;
-  background-color: ${(props) => props.theme.black.lighter};
-`;
-
-const Overlay = styled(motion.div)`
-  position: fixed;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  opacity: 0;
-`;
-
-const BigCover = styled.div`
-  width: 100%;
-  background-size: cover;
-  background-position: center center;
-  height: 400px;
-`;
+import YoutubeEmbed from "./YoutubeEmbed";
 
 const BigTitle = styled.h3`
   color: ${(props) => props.theme.white.lighter};
   padding: 20px;
   font-size: 32px;
-  position: relative;
-  top: -80px;
 `;
 
 const InfoArea = styled.div`
   width: 100%;
-  height: 100%;
-  position: relative;
-  top: -100px;
-  padding-top: 20px;
 `;
 
 const BigOverview = styled.p`
   padding: 20px;
-
   color: ${(props) => props.theme.white.lighter};
 `;
 
@@ -113,13 +77,29 @@ function MovieDetail() {
     () => getMovieDetail(contentId)
   );
 
+  const { data: videos, isLoading: isVideosLoading } = useQuery<IGetVideos>(
+    ["content", "videos"],
+    () => getVideoForMovie(contentId)
+  );
+
+  let embedId = "";
+  if (!isVideosLoading && videos?.results) {
+    for (let i = 0; i < videos.results.length; i++) {
+      let video = videos.results[i];
+      if (video.type === "Trailer" && video.site === "YouTube") {
+        embedId = video.key;
+        break;
+      }
+    }
+  }
+
   return (
     <>
-      {isLoading ? (
+      {isLoading || isVideosLoading ? (
         <Loader>Loading...</Loader>
       ) : (
         <>
-          <BigCover
+          {/* <BigCover
             key={contentId}
             style={{
               backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
@@ -127,7 +107,8 @@ function MovieDetail() {
                 "w500"
               )})`,
             }}
-          />
+          /> */}
+          <YoutubeEmbed embedId={embedId} />
           <BigTitle>{data?.title}</BigTitle>
           <InfoArea>
             <InfoHeader>
@@ -138,8 +119,8 @@ function MovieDetail() {
                 {data?.vote_average}
               </SmallCard>
               <SmallCard>{data?.original_language}</SmallCard>
-              {data?.genres.map((item) => (
-                <SmallCard>#{item.name}</SmallCard>
+              {data?.genres.map((genre) => (
+                <SmallCard key={genre.id}>#{genre.name}</SmallCard>
               ))}
             </InfoHeader>
             <Logos>
@@ -149,6 +130,7 @@ function MovieDetail() {
                     <Logo
                       src={makeImagePath(item.logo_path || "")}
                       alt="logo"
+                      key={item.name}
                     />
                   )
               )}

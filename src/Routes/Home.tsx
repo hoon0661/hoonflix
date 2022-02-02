@@ -114,7 +114,7 @@ const BigMovie = styled(motion.div)`
   right: 0;
   margin: 0 auto;
   border-radius: 15px;
-  overflow: hidden;
+  overflow-y: scroll;
   background-color: ${(props) => props.theme.black.lighter};
 `;
 
@@ -223,8 +223,8 @@ function Home() {
     }
   };
   const toggleLeaving = () => setLeaving((prev) => !prev);
-  const onBoxClicked = (movieId: number, dataType: string) => {
-    setDataType(dataType);
+  const onBoxClicked = (movieId?: number, dataType?: string) => {
+    setDataType(dataType || "");
     history.push(`/movies/${movieId}`);
   };
   const onOverlayClick = () => history.push("/");
@@ -244,6 +244,7 @@ function Home() {
       ) : (
         <>
           <Banner
+            onClick={() => onBoxClicked(weekly?.results[0].id, "weekly")}
             bgphoto={makeImagePath(weekly?.results[0].backdrop_path || "")}
           >
             <Title>{weekly?.results[0].title}</Title>
