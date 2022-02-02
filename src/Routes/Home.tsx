@@ -2,11 +2,8 @@ import { useQuery } from "react-query";
 import styled from "styled-components";
 import { motion, AnimatePresence, useViewportScroll } from "framer-motion";
 import {
-  getAllTrendingDaily,
-  getAllTrendingWeekly,
-  getMovieDetail,
-  getMovies,
-  IGetMovieDetail,
+  getMovieTrendingDaily,
+  getMovieTrendingWeekly,
   IGetMoviesResult,
 } from "../api";
 import { makeImagePath } from "./utils";
@@ -17,7 +14,7 @@ import {
   faChevronLeft,
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
-import Detail from "../Components/Detail";
+import MovieDetail from "../Components/MovieDetail";
 
 const Wrapper = styled.div`
   background: black;
@@ -111,7 +108,7 @@ const Overlay = styled(motion.div)`
 
 const BigMovie = styled(motion.div)`
   position: absolute;
-  width: 40vw;
+  width: 55vw;
   height: 80vh;
   left: 0;
   right: 0;
@@ -119,28 +116,6 @@ const BigMovie = styled(motion.div)`
   border-radius: 15px;
   overflow: hidden;
   background-color: ${(props) => props.theme.black.lighter};
-`;
-
-const BigCover = styled.div`
-  width: 100%;
-  background-size: cover;
-  background-position: center center;
-  height: 400px;
-`;
-
-const BigTitle = styled.h3`
-  color: ${(props) => props.theme.white.lighter};
-  padding: 20px;
-  font-size: 46px;
-  position: relative;
-  top: -80px;
-`;
-
-const BigOverview = styled.p`
-  padding: 20px;
-  position: relative;
-  top: -80px;
-  color: ${(props) => props.theme.white.lighter};
 `;
 
 const SlideButton = styled.div<{ isLeft: boolean }>`
@@ -208,22 +183,22 @@ const infoVariants = {
 };
 
 const offset = 6;
-
+const DATA_TYPE = "movie";
 function Home() {
   const history = useHistory();
   const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId");
   const { scrollY } = useViewportScroll();
-  const { data: weekly, isLoading: isLoadingWeekly } =
-    useQuery<IGetMoviesResult>(["weekly", "trending"], getAllTrendingWeekly);
-  const { data: daily, isLoading: isLoadingDaily } = useQuery<IGetMoviesResult>(
-    ["daily", "trending"],
-    getAllTrendingDaily
-  );
   const [indexWeekly, setIndexWeekly] = useState(0);
   const [indexDaily, setIndexDaily] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const [goingBack, setGoingBack] = useState(false);
   const [dataType, setDataType] = useState("");
+  const { data: weekly, isLoading: isLoadingWeekly } =
+    useQuery<IGetMoviesResult>(["weekly", "trending"], getMovieTrendingWeekly);
+  const { data: daily, isLoading: isLoadingDaily } = useQuery<IGetMoviesResult>(
+    ["daily", "trending"],
+    getMovieTrendingDaily
+  );
   const changeIndex = (back: boolean, isWeekly: boolean) => {
     if (weekly) {
       if (leaving) return;
@@ -276,7 +251,7 @@ function Home() {
           </Banner>
 
           <Slider>
-            <Subheader>Weekly Trending</Subheader>
+            <Subheader>Weekly Trending Movies</Subheader>
             <AnimatePresence
               initial={false}
               onExitComplete={toggleLeaving}
@@ -329,7 +304,7 @@ function Home() {
           </Slider>
 
           <Slider>
-            <Subheader>Daily Trending</Subheader>
+            <Subheader>Daily Trending Movies</Subheader>
             <AnimatePresence
               initial={false}
               onExitComplete={toggleLeaving}
@@ -393,20 +368,7 @@ function Home() {
                   style={{ top: scrollY.get() + 100 }}
                   layoutId={bigMovieMatch.params.movieId + dataType}
                 >
-                  {clickedMovie && (
-                    <>
-                      <BigCover
-                        style={{
-                          backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
-                            clickedMovie.backdrop_path,
-                            "w500"
-                          )})`,
-                        }}
-                      />
-                      <BigTitle>{clickedMovie.title}</BigTitle>
-                      <BigOverview>{clickedMovie.overview}</BigOverview>
-                    </>
-                  )}
+                  {clickedMovie && <MovieDetail />}
                 </BigMovie>
               </>
             ) : null}

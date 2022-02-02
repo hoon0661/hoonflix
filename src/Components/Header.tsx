@@ -155,11 +155,6 @@ function Header() {
             </Link>
           </Item>
           <Item>
-            <Link to="/movie">
-              Movies {movieMatch && <Circle layoutId="circle" />}
-            </Link>
-          </Item>
-          <Item>
             <Link to="/tv">
               Tv Shows {tvMatch && <Circle layoutId="circle" />}
             </Link>
