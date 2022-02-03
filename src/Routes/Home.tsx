@@ -2,11 +2,13 @@ import { useQuery } from "react-query";
 import styled from "styled-components";
 import { motion, AnimatePresence, useViewportScroll } from "framer-motion";
 import {
-  getMovieTrendingDaily,
-  getMovieTrendingWeekly,
+  getMoviesNowPlaying,
+  getMoviesPopular,
+  getMoviesTopRated,
+  getMoviesUpcoming,
   IGetMoviesResult,
 } from "../api";
-import { makeImagePath } from "./utils";
+import { makeImagePath } from "../utils";
 import { useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -28,7 +30,7 @@ const Loader = styled.div`
   align-items: center;
 `;
 
-const Banner = styled.div<{ bgphoto: string }>`
+const Banner = styled(motion.div)<{ bgphoto: string }>`
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -114,7 +116,8 @@ const BigMovie = styled(motion.div)`
   right: 0;
   margin: 0 auto;
   border-radius: 15px;
-  overflow-y: scroll;
+  overflow-y: auto;
+  overflow-x: hidden;
   background-color: ${(props) => props.theme.black.lighter};
 `;
 
@@ -183,41 +186,91 @@ const infoVariants = {
 };
 
 const offset = 6;
-const DATA_TYPE = "movie";
+const NOW = "now";
+const POPULAR = "popular";
+const TOP_RATED = "topRated";
+const UPCOMING = "upcoming";
+const SIMILAR = "similar";
 function Home() {
   const history = useHistory();
   const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId");
+  const { data: nowPlaying, isLoading: isLoadingNowPlaying } =
+    useQuery<IGetMoviesResult>(["movie", "nowPlaying"], getMoviesNowPlaying);
+
+  const { data: popular, isLoading: isLoadingPopular } =
+    useQuery<IGetMoviesResult>(["movie", "popular"], getMoviesPopular);
+
+  const { data: topRated, isLoading: isLoadingTopRated } =
+    useQuery<IGetMoviesResult>(["movie", "topRated"], getMoviesTopRated);
+
+  const { data: upcoming, isLoading: isLoadingUpcoming } =
+    useQuery<IGetMoviesResult>(["movie", "upcoming"], getMoviesUpcoming);
   const { scrollY } = useViewportScroll();
-  const [indexWeekly, setIndexWeekly] = useState(0);
-  const [indexDaily, setIndexDaily] = useState(0);
+  const [indexNow, setIndexNow] = useState(0);
+  const [indexPopular, setIndexPopular] = useState(0);
+  const [indexTopRated, setIndexTopRated] = useState(0);
+  const [indexUpcoming, setIndexUpcoming] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const [goingBack, setGoingBack] = useState(false);
   const [dataType, setDataType] = useState("");
-  const { data: weekly, isLoading: isLoadingWeekly } =
-    useQuery<IGetMoviesResult>(["weekly", "trending"], getMovieTrendingWeekly);
-  const { data: daily, isLoading: isLoadingDaily } = useQuery<IGetMoviesResult>(
-    ["daily", "trending"],
-    getMovieTrendingDaily
-  );
-  const changeIndex = (back: boolean, isWeekly: boolean) => {
-    if (weekly) {
+
+  const changeIndex = (back: boolean, type: string) => {
+    if (nowPlaying && popular && topRated && upcoming) {
       if (leaving) return;
       toggleLeaving();
-      const totalMovies = weekly.results.length - 1;
-      const maxIndex = Math.floor(totalMovies / offset) - 1;
+      const totalMoviesForNow = nowPlaying.results.length - 1;
+      const maxIndexForNow = Math.floor(totalMoviesForNow / offset) - 1;
+
+      const totalMoviesForPopular = popular.results.length;
+      const maxIndexForPopular = Math.floor(totalMoviesForPopular / offset) - 1;
+
+      const totalMoviesForTopRated = topRated.results.length;
+      const maxIndexForTopRated =
+        Math.floor(totalMoviesForTopRated / offset) - 1;
+
+      const totalMoviesForUpcoming = upcoming.results.length;
+      const maxIndexForUpcoming =
+        Math.floor(totalMoviesForUpcoming / offset) - 1;
+
       if (!back) {
         setGoingBack(false);
-        if (isWeekly) {
-          setIndexWeekly((prev) => (prev === maxIndex ? 0 : prev + 1));
-        } else {
-          setIndexDaily((prev) => (prev === maxIndex ? 0 : prev + 1));
+        if (type === NOW) {
+          setIndexNow((prev) => (prev === maxIndexForNow ? 0 : prev + 1));
+        }
+        if (type === POPULAR) {
+          setIndexPopular((prev) =>
+            prev === maxIndexForPopular ? 0 : prev + 1
+          );
+        }
+        if (type === TOP_RATED) {
+          setIndexTopRated((prev) =>
+            prev === maxIndexForTopRated ? 0 : prev + 1
+          );
+        }
+        if (type === UPCOMING) {
+          setIndexUpcoming((prev) =>
+            prev === maxIndexForUpcoming ? 0 : prev + 1
+          );
         }
       } else {
         setGoingBack(true);
-        if (isWeekly) {
-          setIndexWeekly((prev) => (prev === 0 ? maxIndex : prev - 1));
-        } else {
-          setIndexDaily((prev) => (prev === 0 ? maxIndex : prev - 1));
+        if (type === NOW) {
+          setIndexNow((prev) => (prev === 0 ? maxIndexForNow : prev - 1));
+        }
+        if (type === POPULAR) {
+          setIndexPopular((prev) =>
+            prev === 0 ? maxIndexForPopular : prev - 1
+          );
+        }
+        if (type === TOP_RATED) {
+          setIndexTopRated((prev) =>
+            prev === 0 ? maxIndexForTopRated : prev - 1
+          );
+        }
+        if (type === UPCOMING) {
+          setIndexUpcoming((prev) =>
+            prev === 0 ? maxIndexForUpcoming : prev - 1
+          );
         }
       }
     }
@@ -227,32 +280,30 @@ function Home() {
     setDataType(dataType || "");
     history.push(`/movies/${movieId}`);
   };
+
   const onOverlayClick = () => history.push("/");
-  const clickedMovie =
-    bigMovieMatch?.params.movieId &&
-    (weekly?.results.find(
-      (movie) => movie.id === +bigMovieMatch.params.movieId
-    ) ||
-      daily?.results.find(
-        (movie) => movie.id === +bigMovieMatch.params.movieId
-      ));
+  const clickedMovie = bigMovieMatch?.params.movieId;
 
   return (
     <Wrapper>
-      {isLoadingWeekly || isLoadingDaily ? (
+      {isLoadingNowPlaying ||
+      isLoadingPopular ||
+      isLoadingTopRated ||
+      isLoadingUpcoming ? (
         <Loader>Loading...</Loader>
       ) : (
         <>
           <Banner
-            onClick={() => onBoxClicked(weekly?.results[0].id, "weekly")}
-            bgphoto={makeImagePath(weekly?.results[0].backdrop_path || "")}
+            layoutId={nowPlaying?.results[0].id + NOW}
+            onClick={() => onBoxClicked(nowPlaying?.results[0].id, NOW)}
+            bgphoto={makeImagePath(nowPlaying?.results[0].backdrop_path || "")}
           >
-            <Title>{weekly?.results[0].title}</Title>
-            <Overview>{weekly?.results[0].overview}</Overview>
+            <Title>{nowPlaying?.results[0].title}</Title>
+            <Overview>{nowPlaying?.results[0].overview}</Overview>
           </Banner>
 
           <Slider>
-            <Subheader>Weekly Trending Movies</Subheader>
+            <Subheader>Now Playing</Subheader>
             <AnimatePresence
               initial={false}
               onExitComplete={toggleLeaving}
@@ -261,7 +312,7 @@ function Home() {
               <SlideButton
                 key="leftButton"
                 isLeft={true}
-                onClick={() => changeIndex(true, true)}
+                onClick={() => changeIndex(true, NOW)}
               >
                 <FontAwesomeIcon icon={faChevronLeft} size="2x" />
               </SlideButton>
@@ -272,19 +323,19 @@ function Home() {
                 animate="center"
                 exit="exit"
                 transition={{ type: "tween", duration: 1 }}
-                key={indexWeekly}
+                key={indexNow}
               >
-                {weekly?.results
+                {nowPlaying?.results
                   .slice(1)
-                  .slice(offset * indexWeekly, offset * indexWeekly + offset)
+                  .slice(offset * indexNow, offset * indexNow + offset)
                   .map((movie) => (
                     <Box
-                      layoutId={movie.id + "weekly"}
-                      key={movie.id + "weekly"}
+                      layoutId={movie.id + NOW}
+                      key={movie.id + NOW}
                       whileHover="hover"
                       initial="normal"
                       variants={boxVariants}
-                      onClick={() => onBoxClicked(movie.id, "weekly")}
+                      onClick={() => onBoxClicked(movie.id, NOW)}
                       transition={{ type: "tween" }}
                       bgphoto={makeImagePath(movie.backdrop_path, "w500")}
                     >
@@ -297,7 +348,7 @@ function Home() {
               <SlideButton
                 key="rightButton"
                 isLeft={false}
-                onClick={() => changeIndex(false, true)}
+                onClick={() => changeIndex(false, NOW)}
               >
                 <FontAwesomeIcon icon={faChevronRight} size="2x" />
               </SlideButton>
@@ -305,7 +356,7 @@ function Home() {
           </Slider>
 
           <Slider>
-            <Subheader>Daily Trending Movies</Subheader>
+            <Subheader>Popular Movies</Subheader>
             <AnimatePresence
               initial={false}
               onExitComplete={toggleLeaving}
@@ -314,7 +365,7 @@ function Home() {
               <SlideButton
                 key="leftButton"
                 isLeft={true}
-                onClick={() => changeIndex(true, false)}
+                onClick={() => changeIndex(true, POPULAR)}
               >
                 <FontAwesomeIcon icon={faChevronLeft} size="2x" />
               </SlideButton>
@@ -325,19 +376,19 @@ function Home() {
                 animate="center"
                 exit="exit"
                 transition={{ type: "tween", duration: 1 }}
-                key={indexDaily}
+                key={indexPopular}
               >
-                {daily?.results
+                {popular?.results
                   .slice(1)
-                  .slice(offset * indexDaily, offset * indexDaily + offset)
+                  .slice(offset * indexPopular, offset * indexPopular + offset)
                   .map((movie) => (
                     <Box
-                      layoutId={movie.id + "daily"}
-                      key={movie.id + "daily"}
+                      layoutId={movie.id + POPULAR}
+                      key={movie.id + POPULAR}
                       whileHover="hover"
                       initial="normal"
                       variants={boxVariants}
-                      onClick={() => onBoxClicked(movie.id, "daily")}
+                      onClick={() => onBoxClicked(movie.id, POPULAR)}
                       transition={{ type: "tween" }}
                       bgphoto={makeImagePath(movie.backdrop_path, "w500")}
                     >
@@ -350,7 +401,119 @@ function Home() {
               <SlideButton
                 key="rightButton"
                 isLeft={false}
-                onClick={() => changeIndex(false, false)}
+                onClick={() => changeIndex(false, POPULAR)}
+              >
+                <FontAwesomeIcon icon={faChevronRight} size="2x" />
+              </SlideButton>
+            </AnimatePresence>
+          </Slider>
+
+          <Slider>
+            <Subheader>Top Rated Movies</Subheader>
+            <AnimatePresence
+              initial={false}
+              onExitComplete={toggleLeaving}
+              custom={goingBack}
+            >
+              <SlideButton
+                key="leftButton"
+                isLeft={true}
+                onClick={() => changeIndex(true, TOP_RATED)}
+              >
+                <FontAwesomeIcon icon={faChevronLeft} size="2x" />
+              </SlideButton>
+              <Row
+                custom={goingBack}
+                variants={rowVariants}
+                initial="entry"
+                animate="center"
+                exit="exit"
+                transition={{ type: "tween", duration: 1 }}
+                key={indexTopRated}
+              >
+                {topRated?.results
+                  .slice(1)
+                  .slice(
+                    offset * indexTopRated,
+                    offset * indexTopRated + offset
+                  )
+                  .map((movie) => (
+                    <Box
+                      layoutId={movie.id + TOP_RATED}
+                      key={movie.id + TOP_RATED}
+                      whileHover="hover"
+                      initial="normal"
+                      variants={boxVariants}
+                      onClick={() => onBoxClicked(movie.id, TOP_RATED)}
+                      transition={{ type: "tween" }}
+                      bgphoto={makeImagePath(movie.backdrop_path, "w500")}
+                    >
+                      <Info variants={infoVariants}>
+                        <h4>{movie.title}</h4>
+                      </Info>
+                    </Box>
+                  ))}
+              </Row>
+              <SlideButton
+                key="rightButton"
+                isLeft={false}
+                onClick={() => changeIndex(false, TOP_RATED)}
+              >
+                <FontAwesomeIcon icon={faChevronRight} size="2x" />
+              </SlideButton>
+            </AnimatePresence>
+          </Slider>
+
+          <Slider>
+            <Subheader>Upcoming Movies</Subheader>
+            <AnimatePresence
+              initial={false}
+              onExitComplete={toggleLeaving}
+              custom={goingBack}
+            >
+              <SlideButton
+                key="leftButton"
+                isLeft={true}
+                onClick={() => changeIndex(true, UPCOMING)}
+              >
+                <FontAwesomeIcon icon={faChevronLeft} size="2x" />
+              </SlideButton>
+              <Row
+                custom={goingBack}
+                variants={rowVariants}
+                initial="entry"
+                animate="center"
+                exit="exit"
+                transition={{ type: "tween", duration: 1 }}
+                key={indexUpcoming}
+              >
+                {upcoming?.results
+                  .slice(1)
+                  .slice(
+                    offset * indexUpcoming,
+                    offset * indexUpcoming + offset
+                  )
+                  .map((movie) => (
+                    <Box
+                      layoutId={movie.id + UPCOMING}
+                      key={movie.id + UPCOMING}
+                      whileHover="hover"
+                      initial="normal"
+                      variants={boxVariants}
+                      onClick={() => onBoxClicked(movie.id, UPCOMING)}
+                      transition={{ type: "tween" }}
+                      bgphoto={makeImagePath(movie.backdrop_path, "w500")}
+                    >
+                      <Info variants={infoVariants}>
+                        <h4>{movie.title}</h4>
+                      </Info>
+                    </Box>
+                  ))}
+              </Row>
+              <SlideButton
+                key="rightButton"
+                isLeft={false}
+                onClick={() => changeIndex(false, UPCOMING)}
               >
                 <FontAwesomeIcon icon={faChevronRight} size="2x" />
               </SlideButton>
@@ -369,7 +532,7 @@ function Home() {
                   style={{ top: scrollY.get() + 100 }}
                   layoutId={bigMovieMatch.params.movieId + dataType}
                 >
-                  {clickedMovie && <MovieDetail />}
+                  {clickedMovie && <MovieDetail movieId={clickedMovie} />}
                 </BigMovie>
               </>
             ) : null}

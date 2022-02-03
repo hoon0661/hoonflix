@@ -1,21 +1,31 @@
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { motion } from "framer-motion";
 import { useQuery } from "react-query";
-import { useRouteMatch } from "react-router-dom";
 import styled from "styled-components";
 import {
   getMovieDetail,
+  getSimilarMovies,
   getVideoForMovie,
   IGetMovieDetail,
+  IGetSimilarMoviesResult,
   IGetVideos,
 } from "../api";
-import { makeImagePath } from "../Routes/utils";
+import { makeImagePath } from "../utils";
 import YoutubeEmbed from "./YoutubeEmbed";
 
-const BigTitle = styled.h3`
+const SubHeader = styled.div`
   color: ${(props) => props.theme.white.lighter};
   padding: 20px;
+  font-size: 24px;
+`;
+
+const BigTitle = styled(SubHeader)`
   font-size: 32px;
+  padding-bottom: 0;
+  a:hover {
+    color: ${(props) => props.theme.white.darker};
+  }
 `;
 
 const InfoArea = styled.div`
@@ -67,20 +77,82 @@ const SmallCard = styled.span`
   margin-right: 10px;
 `;
 
-function MovieDetail() {
-  const bigContentMatch =
-    useRouteMatch<{ movieId: string }>("/movies/:movieId");
-  const contentId = bigContentMatch?.params.movieId;
+const SimilarMovies = styled.div`
+  padding: 20px;
+  display: grid;
+  gap: 5px;
+  grid-template-columns: repeat(2, 1fr);
+  width: 100%;
+`;
 
+const SimilarMovieBox = styled(motion.div)<{ bgphoto: string }>`
+  background-image: url(${(props) => props.bgphoto});
+  background-size: cover;
+  background-position: center center;
+  height: 200px;
+  cursor: pointer;
+  &:nth-child(odd) {
+    transform-origin: center left;
+  }
+  &:nth-child(even) {
+    transform-origin: center right;
+  }
+`;
+
+const Info = styled(motion.div)`
+  padding: 10px;
+  background-color: ${(props) => props.theme.black.veryDark};
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  h4 {
+    text-align: center;
+    font-size: 18px;
+  }
+`;
+
+const boxVariants = {
+  normal: {
+    scale: 1,
+  },
+  hover: {
+    scale: 1.2,
+    y: -40,
+    transition: {
+      delay: 0.5,
+      duaration: 0.1,
+      type: "tween",
+    },
+  },
+};
+
+const infoVariants = {
+  hover: {
+    opacity: 1,
+    transition: {
+      delay: 0.5,
+      duaration: 0.1,
+      type: "tween",
+    },
+  },
+};
+
+const MovieDetail = (props: any) => {
   const { data, isLoading } = useQuery<IGetMovieDetail>(
     ["content", "detail"],
-    () => getMovieDetail(contentId)
+    () => getMovieDetail(props.movieId)
   );
 
   const { data: videos, isLoading: isVideosLoading } = useQuery<IGetVideos>(
     ["content", "videos"],
-    () => getVideoForMovie(contentId)
+    () => getVideoForMovie(props.movieId)
   );
+
+  const { data: similar, isLoading: isSimilarLoading } =
+    useQuery<IGetSimilarMoviesResult>(["content", "similar"], () =>
+      getSimilarMovies(props.movieId)
+    );
 
   let embedId = "";
   if (!isVideosLoading && videos?.results) {
@@ -93,9 +165,15 @@ function MovieDetail() {
     }
   }
 
+  // const onBoxClicked = (movieId: string) => {
+  //   history.push(`/movies/${movieId}`);
+  //   /////Please set up useState to display detail from similar movie
+  //   //ex useState for contentId
+  // };
+
   return (
     <>
-      {isLoading || isVideosLoading ? (
+      {isLoading || isVideosLoading || isSimilarLoading ? (
         <Loader>Loading...</Loader>
       ) : (
         <>
@@ -109,7 +187,11 @@ function MovieDetail() {
             }}
           /> */}
           <YoutubeEmbed embedId={embedId} />
-          <BigTitle>{data?.title}</BigTitle>
+          <BigTitle>
+            <a href={data?.homepage} target="_blank">
+              {data?.title}
+            </a>
+          </BigTitle>
           <InfoArea>
             <InfoHeader>
               <SmallCard>{data?.release_date}</SmallCard>
@@ -135,12 +217,35 @@ function MovieDetail() {
                   )
               )}
             </Logos>
+
             <BigOverview>{data?.overview}</BigOverview>
+            {similar?.results.length ? (
+              <SubHeader>Similar Movies</SubHeader>
+            ) : null}
+            <SimilarMovies>
+              {similar?.results.slice(0, 6).map((movie) => (
+                <SimilarMovieBox
+                  variants={boxVariants}
+                  whileHover="hover"
+                  initial="normal"
+                  transition={{ type: "tween" }}
+                  key={movie.id}
+                  bgphoto={makeImagePath(
+                    movie.backdrop_path || movie.poster_path,
+                    "w500"
+                  )}
+                >
+                  <Info variants={infoVariants}>
+                    <h4>{movie.title}</h4>
+                  </Info>
+                </SimilarMovieBox>
+              ))}
+            </SimilarMovies>
           </InfoArea>
         </>
       )}
     </>
   );
-}
+};
 
 export default MovieDetail;

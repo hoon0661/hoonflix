@@ -14,6 +14,7 @@ const Nav = styled(motion.nav)`
   font-size: 14px;
   padding: 20px 60px;
   color: white;
+  z-index: 1000;
 `;
 const Col = styled.div`
   display: flex;
@@ -59,7 +60,7 @@ const Search = styled.form`
 const Circle = styled(motion.span)`
   transform-origin: right center;
   position: absolute;
-  width: 40px;
+  width: 5px;
   height: 5px;
   border-radius: 5px;
   bottom: -5px;
@@ -107,7 +108,6 @@ interface IForm {
 function Header() {
   const homeMatch = useRouteMatch("/");
   const tvMatch = useRouteMatch("/tv");
-  const movieMatch = useRouteMatch("/movie");
   const [searchOpen, setSearchOpen] = useState(false);
   const inputAnimation = useAnimation();
   const navAnimation = useAnimation();

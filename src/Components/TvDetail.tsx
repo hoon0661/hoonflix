@@ -1,16 +1,34 @@
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { motion } from "framer-motion";
 import { useQuery } from "react-query";
 import { useRouteMatch } from "react-router-dom";
 import styled from "styled-components";
-import { getTvDetail, getVideoForTv, IGetTvDetail, IGetVideos } from "../api";
-import { makeImagePath } from "../Routes/utils";
+import {
+  getSimilarTvs,
+  getTvDetail,
+  getVideoForTv,
+  IGetSimilarTvsResult,
+  IGetTvDetail,
+  IGetVideos,
+} from "../api";
+import { makeImagePath } from "../utils";
 import YoutubeEmbed from "./YoutubeEmbed";
+
+const BigCover = styled.div`
+  width: 100%;
+  background-size: cover;
+  background-position: center center;
+  height: 400px;
+`;
 
 const BigTitle = styled.h3`
   color: ${(props) => props.theme.white.lighter};
   padding: 20px;
   font-size: 32px;
+  a:hover {
+    color: ${(props) => props.theme.white.darker};
+  }
 `;
 
 const InfoArea = styled.div`
@@ -62,25 +80,94 @@ const SmallCard = styled.span`
   margin-right: 10px;
 `;
 
-function TvDetail() {
-  const bigContentMatch = useRouteMatch<{ tvId: string }>("/tv/:tvId");
-  const contentId = bigContentMatch?.params.tvId;
+const SimilarMovies = styled.div`
+  padding: 20px;
+  display: grid;
+  gap: 5px;
+  grid-template-columns: repeat(2, 1fr);
+  width: 100%;
+`;
 
+const SimilarMovieBox = styled(motion.div)<{ bgphoto: string }>`
+  background-image: url(${(props) => props.bgphoto});
+  background-size: cover;
+  background-position: center center;
+  height: 200px;
+  cursor: pointer;
+  &:nth-child(odd) {
+    transform-origin: center left;
+  }
+  &:nth-child(even) {
+    transform-origin: center right;
+  }
+`;
+
+const SubHeader = styled.div`
+  color: ${(props) => props.theme.white.lighter};
+  padding: 20px;
+  font-size: 24px;
+`;
+
+const Info = styled(motion.div)`
+  padding: 10px;
+  background-color: ${(props) => props.theme.black.veryDark};
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  h4 {
+    text-align: center;
+    font-size: 18px;
+  }
+`;
+
+const boxVariants = {
+  normal: {
+    scale: 1,
+  },
+  hover: {
+    scale: 1.2,
+    y: -40,
+    transition: {
+      delay: 0.5,
+      duaration: 0.1,
+      type: "tween",
+    },
+  },
+};
+
+const infoVariants = {
+  hover: {
+    opacity: 1,
+    transition: {
+      delay: 0.5,
+      duaration: 0.1,
+      type: "tween",
+    },
+  },
+};
+
+const TvDetail = (props: any) => {
   const { data, isLoading } = useQuery<IGetTvDetail>(
     ["content", "detail"],
-    () => getTvDetail(contentId)
+    () => getTvDetail(props.tvId)
   );
 
   const { data: videos, isLoading: isVideosLoading } = useQuery<IGetVideos>(
     ["content", "videos"],
-    () => getVideoForTv(contentId)
+    () => getVideoForTv(props.tvId)
   );
+
+  const { data: similar, isLoading: isSimilarLoading } =
+    useQuery<IGetSimilarTvsResult>(["content", "similar"], () =>
+      getSimilarTvs(props.tvId)
+    );
 
   let embedId = "";
   if (!isVideosLoading && videos?.results) {
     for (let i = 0; i < videos.results.length; i++) {
       let video = videos.results[i];
-      if (video.type === "Trailer" && video.site === "YouTube") {
+      if (video.site === "YouTube") {
         embedId = video.key;
         break;
       }
@@ -97,17 +184,25 @@ function TvDetail() {
         <Loader>Loading...</Loader>
       ) : (
         <>
-          {/* <BigCover
-            key={contentId}
-            style={{
-              backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
-                data?.backdrop_path || "",
-                "w500"
-              )})`,
-            }}
-          /> */}
-          <YoutubeEmbed embedId={embedId} />
-          <BigTitle>{data?.name}</BigTitle>
+          {embedId ? (
+            <YoutubeEmbed embedId={embedId} />
+          ) : (
+            <BigCover
+              key={props.tvId}
+              style={{
+                backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
+                  data?.backdrop_path || data?.poster_path || "",
+                  "w500"
+                )})`,
+              }}
+            />
+          )}
+
+          <BigTitle>
+            <a href={data?.homepage} target="_blank">
+              {data?.name}
+            </a>
+          </BigTitle>
           <InfoArea>
             <InfoHeader>
               <SmallCard>{data?.first_air_date}</SmallCard>
@@ -136,11 +231,33 @@ function TvDetail() {
               )}
             </Logos>
             <BigOverview>{data?.overview}</BigOverview>
+            {similar?.results.length ? (
+              <SubHeader>Similar TV Shows</SubHeader>
+            ) : null}
+            <SimilarMovies>
+              {similar?.results.slice(0, 6).map((movie) => (
+                <SimilarMovieBox
+                  variants={boxVariants}
+                  whileHover="hover"
+                  initial="normal"
+                  transition={{ type: "tween" }}
+                  key={movie.id}
+                  bgphoto={makeImagePath(
+                    movie.backdrop_path || movie.poster_path,
+                    "w500"
+                  )}
+                >
+                  <Info variants={infoVariants}>
+                    <h4>{movie.name}</h4>
+                  </Info>
+                </SimilarMovieBox>
+              ))}
+            </SimilarMovies>
           </InfoArea>
         </>
       )}
     </>
   );
-}
+};
 
 export default TvDetail;
