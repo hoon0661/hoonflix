@@ -80,7 +80,7 @@ const SmallCard = styled.span`
   margin-right: 10px;
 `;
 
-const SimilarMovies = styled.div`
+const SimilarContents = styled.div`
   padding: 20px;
   display: grid;
   gap: 5px;
@@ -88,7 +88,7 @@ const SimilarMovies = styled.div`
   width: 100%;
 `;
 
-const SimilarMovieBox = styled(motion.div)<{ bgphoto: string }>`
+const SimilarContentBox = styled(motion.div)<{ bgphoto: string }>`
   background-image: url(${(props) => props.bgphoto});
   background-size: cover;
   background-position: center center;
@@ -150,17 +150,17 @@ const infoVariants = {
 const TvDetail = (props: any) => {
   const { data, isLoading } = useQuery<IGetTvDetail>(
     ["content", "detail"],
-    () => getTvDetail(props.tvId)
+    () => getTvDetail(props.contentId)
   );
 
   const { data: videos, isLoading: isVideosLoading } = useQuery<IGetVideos>(
     ["content", "videos"],
-    () => getVideoForTv(props.tvId)
+    () => getVideoForTv(props.contentId)
   );
 
   const { data: similar, isLoading: isSimilarLoading } =
     useQuery<IGetSimilarTvsResult>(["content", "similar"], () =>
-      getSimilarTvs(props.tvId)
+      getSimilarTvs(props.contentId)
     );
 
   let embedId = "";
@@ -180,7 +180,7 @@ const TvDetail = (props: any) => {
 
   return (
     <>
-      {isLoading || isVideosLoading ? (
+      {isLoading || isVideosLoading || isSimilarLoading ? (
         <Loader>Loading...</Loader>
       ) : (
         <>
@@ -188,7 +188,7 @@ const TvDetail = (props: any) => {
             <YoutubeEmbed embedId={embedId} />
           ) : (
             <BigCover
-              key={props.tvId}
+              key={props.contentId}
               style={{
                 backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
                   data?.backdrop_path || data?.poster_path || "",
@@ -234,25 +234,25 @@ const TvDetail = (props: any) => {
             {similar?.results.length ? (
               <SubHeader>Similar TV Shows</SubHeader>
             ) : null}
-            <SimilarMovies>
-              {similar?.results.slice(0, 6).map((movie) => (
-                <SimilarMovieBox
+            <SimilarContents>
+              {similar?.results.slice(0, 6).map((item) => (
+                <SimilarContentBox
                   variants={boxVariants}
                   whileHover="hover"
                   initial="normal"
                   transition={{ type: "tween" }}
-                  key={movie.id}
+                  key={item.id}
                   bgphoto={makeImagePath(
-                    movie.backdrop_path || movie.poster_path,
+                    item.backdrop_path || item.poster_path,
                     "w500"
                   )}
                 >
                   <Info variants={infoVariants}>
-                    <h4>{movie.name}</h4>
+                    <h4>{item.name}</h4>
                   </Info>
-                </SimilarMovieBox>
+                </SimilarContentBox>
               ))}
-            </SimilarMovies>
+            </SimilarContents>
           </InfoArea>
         </>
       )}

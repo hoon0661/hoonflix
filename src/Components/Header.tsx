@@ -107,6 +107,7 @@ interface IForm {
 
 function Header() {
   const homeMatch = useRouteMatch("/");
+  const movieMatch = useRouteMatch("/movies");
   const tvMatch = useRouteMatch("/tv");
   const [searchOpen, setSearchOpen] = useState(false);
   const inputAnimation = useAnimation();
@@ -151,7 +152,10 @@ function Header() {
         <Items>
           <Item>
             <Link to="/">
-              Home {homeMatch?.isExact && <Circle layoutId="circle" />}
+              Home
+              {(homeMatch?.isExact || movieMatch) && (
+                <Circle layoutId="circle" />
+              )}
             </Link>
           </Item>
           <Item>

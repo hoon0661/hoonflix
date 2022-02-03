@@ -11,11 +11,6 @@ import {
 import { makeImagePath } from "../utils";
 import { useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faChevronLeft,
-  faChevronRight,
-} from "@fortawesome/free-solid-svg-icons";
 import MovieDetail from "../Components/MovieDetail";
 import Slider from "../Components/Slider";
 const Wrapper = styled.div`
@@ -48,40 +43,6 @@ const Overview = styled.p`
   width: 50%;
 `;
 
-const Row = styled(motion.div)`
-  display: grid;
-  gap: 5px;
-  grid-template-columns: repeat(6, 1fr);
-  position: absolute;
-  width: 95%;
-`;
-const Box = styled(motion.div)<{ bgphoto: string }>`
-  background-color: white;
-  background-image: url(${(props) => props.bgphoto});
-  background-size: cover;
-  background-position: center center;
-  height: 200px;
-  font-size: 66px;
-  cursor: pointer;
-  &:first-child {
-    transform-origin: center left;
-  }
-  &:last-child {
-    transform-origin: center right;
-  }
-`;
-const Info = styled(motion.div)`
-  padding: 10px;
-  background-color: ${(props) => props.theme.black.lighter};
-  opacity: 0;
-  position: absolute;
-  width: 100%;
-  bottom: 0;
-  h4 {
-    text-align: center;
-    font-size: 18px;
-  }
-`;
 const Overlay = styled(motion.div)`
   position: fixed;
   top: 0;
@@ -102,42 +63,6 @@ const BigMovie = styled(motion.div)`
   overflow-x: hidden;
   background-color: ${(props) => props.theme.black.lighter};
 `;
-
-const SlideButton = styled.div<{ isLeft: boolean }>`
-  background-color: rgba(0, 0, 0, 0.3);
-  color: ${(props) => props.theme.white.darker};
-  width: 2.5%;
-  height: 200px;
-  position: absolute;
-  ${(props) => (props.isLeft ? { left: 0 } : { right: 0 })}
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  &:hover {
-    color: ${(props) => props.theme.black.lighter};
-  }
-`;
-const Subheader = styled.div`
-  background-color: transparent;
-  color: ${(props) => props.theme.white.lighter};
-  padding-left: 2.5%;
-  width: 100%;
-  position: relative;
-  bottom: 35px;
-  font-size: 24px;
-`;
-const rowVariants = {
-  entry: (goingBack: boolean) => ({
-    x: goingBack ? -window.innerWidth - 5 : window.innerWidth + 5,
-  }),
-  center: {
-    x: 0,
-  },
-  exit: (goingBack: boolean) => ({
-    x: goingBack ? window.innerWidth + 5 : -window.innerWidth - 5,
-  }),
-};
 
 const offset = 6;
 const NOW = "now";
@@ -320,7 +245,7 @@ function Home() {
                   style={{ top: scrollY.get() + 100 }}
                   layoutId={bigMovieMatch.params.movieId + dataType}
                 >
-                  {clickedMovie && <MovieDetail movieId={clickedMovie} />}
+                  {clickedMovie && <MovieDetail contentId={clickedMovie} />}
                 </BigMovie>
               </>
             ) : null}

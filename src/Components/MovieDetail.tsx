@@ -14,6 +14,13 @@ import {
 import { makeImagePath } from "../utils";
 import YoutubeEmbed from "./YoutubeEmbed";
 
+const BigCover = styled.div`
+  width: 100%;
+  background-size: cover;
+  background-position: center center;
+  height: 400px;
+`;
+
 const SubHeader = styled.div`
   color: ${(props) => props.theme.white.lighter};
   padding: 20px;
@@ -77,7 +84,7 @@ const SmallCard = styled.span`
   margin-right: 10px;
 `;
 
-const SimilarMovies = styled.div`
+const SimilarContents = styled.div`
   padding: 20px;
   display: grid;
   gap: 5px;
@@ -85,7 +92,7 @@ const SimilarMovies = styled.div`
   width: 100%;
 `;
 
-const SimilarMovieBox = styled(motion.div)<{ bgphoto: string }>`
+const SimilarContentBox = styled(motion.div)<{ bgphoto: string }>`
   background-image: url(${(props) => props.bgphoto});
   background-size: cover;
   background-position: center center;
@@ -141,17 +148,17 @@ const infoVariants = {
 const MovieDetail = (props: any) => {
   const { data, isLoading } = useQuery<IGetMovieDetail>(
     ["content", "detail"],
-    () => getMovieDetail(props.movieId)
+    () => getMovieDetail(props.contentId)
   );
 
   const { data: videos, isLoading: isVideosLoading } = useQuery<IGetVideos>(
     ["content", "videos"],
-    () => getVideoForMovie(props.movieId)
+    () => getVideoForMovie(props.contentId)
   );
 
   const { data: similar, isLoading: isSimilarLoading } =
     useQuery<IGetSimilarMoviesResult>(["content", "similar"], () =>
-      getSimilarMovies(props.movieId)
+      getSimilarMovies(props.contentId)
     );
 
   let embedId = "";
@@ -165,27 +172,12 @@ const MovieDetail = (props: any) => {
     }
   }
 
-  // const onBoxClicked = (movieId: string) => {
-  //   history.push(`/movies/${movieId}`);
-  //   /////Please set up useState to display detail from similar movie
-  //   //ex useState for contentId
-  // };
-
   return (
     <>
       {isLoading || isVideosLoading || isSimilarLoading ? (
         <Loader>Loading...</Loader>
       ) : (
         <>
-          {/* <BigCover
-            key={contentId}
-            style={{
-              backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
-                data?.backdrop_path || "",
-                "w500"
-              )})`,
-            }}
-          /> */}
           <YoutubeEmbed embedId={embedId} />
           <BigTitle>
             <a href={data?.homepage} target="_blank">
@@ -222,25 +214,25 @@ const MovieDetail = (props: any) => {
             {similar?.results.length ? (
               <SubHeader>Similar Movies</SubHeader>
             ) : null}
-            <SimilarMovies>
-              {similar?.results.slice(0, 6).map((movie) => (
-                <SimilarMovieBox
+            <SimilarContents>
+              {similar?.results.slice(0, 6).map((item) => (
+                <SimilarContentBox
                   variants={boxVariants}
                   whileHover="hover"
                   initial="normal"
                   transition={{ type: "tween" }}
-                  key={movie.id}
+                  key={item.id}
                   bgphoto={makeImagePath(
-                    movie.backdrop_path || movie.poster_path,
+                    item.backdrop_path || item.poster_path,
                     "w500"
                   )}
                 >
                   <Info variants={infoVariants}>
-                    <h4>{movie.title}</h4>
+                    <h4>{item.title}</h4>
                   </Info>
-                </SimilarMovieBox>
+                </SimilarContentBox>
               ))}
-            </SimilarMovies>
+            </SimilarContents>
           </InfoArea>
         </>
       )}

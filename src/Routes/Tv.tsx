@@ -11,11 +11,6 @@ import {
 import { makeImagePath } from "../utils";
 import { useState } from "react";
 import { useHistory, useRouteMatch } from "react-router-dom";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faChevronLeft,
-  faChevronRight,
-} from "@fortawesome/free-solid-svg-icons";
 import TvDetail from "../Components/TvDetail";
 import Slider from "../Components/Slider";
 
@@ -71,32 +66,6 @@ const BigMovie = styled(motion.div)`
   border-radius: 15px;
   overflow-y: auto;
   background-color: ${(props) => props.theme.black.lighter};
-`;
-
-const SlideButton = styled.div<{ isLeft: boolean }>`
-  background-color: rgba(0, 0, 0, 0.3);
-  color: ${(props) => props.theme.white.darker};
-  width: 2.5%;
-  height: 200px;
-  position: absolute;
-  ${(props) => (props.isLeft ? { left: 0 } : { right: 0 })}
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  &:hover {
-    color: ${(props) => props.theme.black.lighter};
-  }
-`;
-
-const Subheader = styled.div`
-  background-color: transparent;
-  color: ${(props) => props.theme.white.lighter};
-  padding-left: 2.5%;
-  width: 100%;
-  position: relative;
-  bottom: 35px;
-  font-size: 24px;
 `;
 
 const offset = 6;
@@ -276,7 +245,7 @@ function Tv() {
                   style={{ top: scrollY.get() + 100 }}
                   layoutId={bigTvMatch.params.tvId + dataType}
                 >
-                  {clickedTv && <TvDetail tvId={clickedTv} />}
+                  {clickedTv && <TvDetail contentId={clickedTv} />}
                 </BigMovie>
               </>
             ) : null}
