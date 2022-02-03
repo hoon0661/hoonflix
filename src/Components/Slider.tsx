@@ -5,7 +5,6 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { AnimatePresence, motion } from "framer-motion";
 import styled from "styled-components";
-import { IMovie } from "../api";
 import { makeImagePath } from "../utils";
 
 const Area = styled.div`
@@ -119,7 +118,11 @@ const infoVariants = {
   },
 };
 
+const TV = "tv";
+const MOVIE = "movie";
+
 const Slider = ({
+  category,
   dataTitle,
   toggleLeaving,
   goingBack,
@@ -157,19 +160,22 @@ const Slider = ({
           {data?.results
             .slice(1)
             .slice(offset * index, offset * index + offset)
-            .map((movie: IMovie) => (
+            .map((item: any) => (
               <Box
-                layoutId={movie.id + dataType}
-                key={movie.id + dataType}
+                layoutId={item.id + dataType}
+                key={item.id + dataType}
                 whileHover="hover"
                 initial="normal"
                 variants={boxVariants}
-                onClick={() => onBoxClicked(movie.id, dataType)}
+                onClick={() => onBoxClicked(item.id, dataType)}
                 transition={{ type: "tween" }}
-                bgphoto={makeImagePath(movie.backdrop_path, "w500")}
+                bgphoto={makeImagePath(
+                  item.backdrop_path || item.poster_path,
+                  "w500"
+                )}
               >
                 <Info variants={infoVariants}>
-                  <h4>{movie.title}</h4>
+                  <h4>{category === MOVIE ? item.title : item.name}</h4>
                 </Info>
               </Box>
             ))}

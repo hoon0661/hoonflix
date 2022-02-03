@@ -144,7 +144,7 @@ const NOW = "now";
 const POPULAR = "popular";
 const TOP_RATED = "topRated";
 const UPCOMING = "upcoming";
-const SIMILAR = "similar";
+const MOVIE = "movie";
 function Home() {
   const history = useHistory();
   const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId");
@@ -257,6 +257,7 @@ function Home() {
           </Banner>
 
           <Slider
+            category={MOVIE}
             dataTitle="Now Playing"
             toggleLeaving={toggleLeaving}
             goingBack={goingBack}
@@ -269,6 +270,7 @@ function Home() {
           />
 
           <Slider
+            category={MOVIE}
             dataTitle="Popular Movies"
             toggleLeaving={toggleLeaving}
             goingBack={goingBack}
@@ -281,6 +283,7 @@ function Home() {
           />
 
           <Slider
+            category={MOVIE}
             dataTitle="Top Rated Movies"
             toggleLeaving={toggleLeaving}
             goingBack={goingBack}
@@ -293,6 +296,7 @@ function Home() {
           />
 
           <Slider
+            category={MOVIE}
             dataTitle="Upcoming Movies"
             toggleLeaving={toggleLeaving}
             goingBack={goingBack}

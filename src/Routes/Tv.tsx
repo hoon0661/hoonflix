@@ -17,6 +17,7 @@ import {
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import TvDetail from "../Components/TvDetail";
+import Slider from "../Components/Slider";
 
 const Wrapper = styled.div`
   background: black;
@@ -49,54 +50,6 @@ const Title = styled.h2`
 const Overview = styled.p`
   font-size: 30px;
   width: 50%;
-`;
-
-const Slider = styled.div`
-  position: relative;
-  display: flex;
-  justify-content: center;
-  top: -100px;
-  margin-bottom: 300px;
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const Row = styled(motion.div)`
-  display: grid;
-  gap: 5px;
-  grid-template-columns: repeat(6, 1fr);
-  position: absolute;
-  width: 95%;
-`;
-
-const Box = styled(motion.div)<{ bgphoto: string }>`
-  background-color: white;
-  background-image: url(${(props) => props.bgphoto});
-  background-size: cover;
-  background-position: center center;
-  height: 200px;
-  font-size: 66px;
-  cursor: pointer;
-  &:first-child {
-    transform-origin: center left;
-  }
-  &:last-child {
-    transform-origin: center right;
-  }
-`;
-
-const Info = styled(motion.div)`
-  padding: 10px;
-  background-color: ${(props) => props.theme.black.lighter};
-  opacity: 0;
-  position: absolute;
-  width: 100%;
-  bottom: 0;
-  h4 {
-    text-align: center;
-    font-size: 18px;
-  }
 `;
 
 const Overlay = styled(motion.div)`
@@ -146,49 +99,12 @@ const Subheader = styled.div`
   font-size: 24px;
 `;
 
-const rowVariants = {
-  entry: (goingBack: boolean) => ({
-    x: goingBack ? -window.innerWidth - 5 : window.innerWidth + 5,
-  }),
-  center: {
-    x: 0,
-  },
-  exit: (goingBack: boolean) => ({
-    x: goingBack ? window.innerWidth + 5 : -window.innerWidth - 5,
-  }),
-};
-
-const boxVariants = {
-  normal: {
-    scale: 1,
-  },
-  hover: {
-    scale: 1.3,
-    y: -80,
-    transition: {
-      delay: 0.5,
-      duaration: 0.1,
-      type: "tween",
-    },
-  },
-};
-
-const infoVariants = {
-  hover: {
-    opacity: 1,
-    transition: {
-      delay: 0.5,
-      duaration: 0.1,
-      type: "tween",
-    },
-  },
-};
-
 const offset = 6;
 const TODAY = "today";
 const ONTHEAIR = "onTheAir";
 const TOP_RATED = "topRated";
 const POPULAR = "popular";
+const TV = "tv";
 function Tv() {
   const history = useHistory();
   const bigTvMatch = useRouteMatch<{ tvId: string }>("/tv/:tvId");
@@ -295,235 +211,57 @@ function Tv() {
             <Overview>{onTheAir?.results[0].overview}</Overview>
           </Banner>
 
-          <Slider>
-            <Subheader>On The Air</Subheader>
-            <AnimatePresence
-              initial={false}
-              onExitComplete={toggleLeaving}
-              custom={goingBack}
-            >
-              <SlideButton
-                key="leftButton"
-                isLeft={true}
-                onClick={() => changeIndex(true, ONTHEAIR)}
-              >
-                <FontAwesomeIcon icon={faChevronLeft} size="2x" />
-              </SlideButton>
-              <Row
-                custom={goingBack}
-                variants={rowVariants}
-                initial="entry"
-                animate="center"
-                exit="exit"
-                transition={{ type: "tween", duration: 1 }}
-                key={indexOnTheAir}
-              >
-                {onTheAir?.results
-                  .slice(1)
-                  .slice(
-                    offset * indexOnTheAir,
-                    offset * indexOnTheAir + offset
-                  )
-                  .map((tv) => (
-                    <Box
-                      layoutId={tv.id + ONTHEAIR}
-                      key={tv.id + ONTHEAIR}
-                      whileHover="hover"
-                      initial="normal"
-                      variants={boxVariants}
-                      onClick={() => onBoxClicked(tv.id, ONTHEAIR)}
-                      transition={{ type: "tween" }}
-                      bgphoto={makeImagePath(
-                        tv.backdrop_path || tv.poster_path,
-                        "w500"
-                      )}
-                    >
-                      <Info variants={infoVariants}>
-                        <h4>{tv.name}</h4>
-                      </Info>
-                    </Box>
-                  ))}
-              </Row>
-              <SlideButton
-                key="rightButton"
-                isLeft={false}
-                onClick={() => changeIndex(false, ONTHEAIR)}
-              >
-                <FontAwesomeIcon icon={faChevronRight} size="2x" />
-              </SlideButton>
-            </AnimatePresence>
-          </Slider>
+          <Slider
+            category={TV}
+            dataTitle="On The Air"
+            toggleLeaving={toggleLeaving}
+            goingBack={goingBack}
+            changeIndex={changeIndex}
+            dataType={ONTHEAIR}
+            index={indexOnTheAir}
+            data={onTheAir}
+            offset={offset}
+            onBoxClicked={onBoxClicked}
+          />
 
-          <Slider>
-            <Subheader>Top Rated TV Shows</Subheader>
-            <AnimatePresence
-              initial={false}
-              onExitComplete={toggleLeaving}
-              custom={goingBack}
-            >
-              <SlideButton
-                key="leftButton"
-                isLeft={true}
-                onClick={() => changeIndex(true, TOP_RATED)}
-              >
-                <FontAwesomeIcon icon={faChevronLeft} size="2x" />
-              </SlideButton>
-              <Row
-                custom={goingBack}
-                variants={rowVariants}
-                initial="entry"
-                animate="center"
-                exit="exit"
-                transition={{ type: "tween", duration: 1 }}
-                key={indexTopRated}
-              >
-                {topRated?.results
-                  .slice(1)
-                  .slice(
-                    offset * indexTopRated,
-                    offset * indexTopRated + offset
-                  )
-                  .map((tv) => (
-                    <Box
-                      layoutId={tv.id + TOP_RATED}
-                      key={tv.id + TOP_RATED}
-                      whileHover="hover"
-                      initial="normal"
-                      variants={boxVariants}
-                      onClick={() => onBoxClicked(tv.id, TOP_RATED)}
-                      transition={{ type: "tween" }}
-                      bgphoto={makeImagePath(
-                        tv.backdrop_path || tv.poster_path,
-                        "w500"
-                      )}
-                    >
-                      <Info variants={infoVariants}>
-                        <h4>{tv.name}</h4>
-                      </Info>
-                    </Box>
-                  ))}
-              </Row>
-              <SlideButton
-                key="rightButton"
-                isLeft={false}
-                onClick={() => changeIndex(false, TOP_RATED)}
-              >
-                <FontAwesomeIcon icon={faChevronRight} size="2x" />
-              </SlideButton>
-            </AnimatePresence>
-          </Slider>
+          <Slider
+            category={TV}
+            dataTitle="Today's TV Shows"
+            toggleLeaving={toggleLeaving}
+            goingBack={goingBack}
+            changeIndex={changeIndex}
+            dataType={TODAY}
+            index={indexToday}
+            data={today}
+            offset={offset}
+            onBoxClicked={onBoxClicked}
+          />
 
-          <Slider>
-            <Subheader>Airing Today</Subheader>
-            <AnimatePresence
-              initial={false}
-              onExitComplete={toggleLeaving}
-              custom={goingBack}
-            >
-              <SlideButton
-                key="leftButton"
-                isLeft={true}
-                onClick={() => changeIndex(true, TODAY)}
-              >
-                <FontAwesomeIcon icon={faChevronLeft} size="2x" />
-              </SlideButton>
-              <Row
-                custom={goingBack}
-                variants={rowVariants}
-                initial="entry"
-                animate="center"
-                exit="exit"
-                transition={{ type: "tween", duration: 1 }}
-                key={indexToday}
-              >
-                {today?.results
-                  .slice(1)
-                  .slice(offset * indexToday, offset * indexToday + offset)
-                  .map((tv) => (
-                    <Box
-                      layoutId={tv.id + TODAY}
-                      key={tv.id + TODAY}
-                      whileHover="hover"
-                      initial="normal"
-                      variants={boxVariants}
-                      onClick={() => onBoxClicked(tv.id, TODAY)}
-                      transition={{ type: "tween" }}
-                      bgphoto={makeImagePath(
-                        tv.backdrop_path || tv.poster_path,
-                        "w500"
-                      )}
-                    >
-                      <Info variants={infoVariants}>
-                        <h4>{tv.name}</h4>
-                      </Info>
-                    </Box>
-                  ))}
-              </Row>
-              <SlideButton
-                key="rightButton"
-                isLeft={false}
-                onClick={() => changeIndex(false, TODAY)}
-              >
-                <FontAwesomeIcon icon={faChevronRight} size="2x" />
-              </SlideButton>
-            </AnimatePresence>
-          </Slider>
+          <Slider
+            category={TV}
+            dataTitle="Top Rated TV Shows"
+            toggleLeaving={toggleLeaving}
+            goingBack={goingBack}
+            changeIndex={changeIndex}
+            dataType={TOP_RATED}
+            index={indexTopRated}
+            data={topRated}
+            offset={offset}
+            onBoxClicked={onBoxClicked}
+          />
 
-          <Slider>
-            <Subheader>Popular TV Shows</Subheader>
-            <AnimatePresence
-              initial={false}
-              onExitComplete={toggleLeaving}
-              custom={goingBack}
-            >
-              <SlideButton
-                key="leftButton"
-                isLeft={true}
-                onClick={() => changeIndex(true, POPULAR)}
-              >
-                <FontAwesomeIcon icon={faChevronLeft} size="2x" />
-              </SlideButton>
-              <Row
-                custom={goingBack}
-                variants={rowVariants}
-                initial="entry"
-                animate="center"
-                exit="exit"
-                transition={{ type: "tween", duration: 1 }}
-                key={indexPopular}
-              >
-                {popular?.results
-                  .slice(1)
-                  .slice(offset * indexPopular, offset * indexPopular + offset)
-                  .map((tv) => (
-                    <Box
-                      layoutId={tv.id + POPULAR}
-                      key={tv.id + POPULAR}
-                      whileHover="hover"
-                      initial="normal"
-                      variants={boxVariants}
-                      onClick={() => onBoxClicked(tv.id, POPULAR)}
-                      transition={{ type: "tween" }}
-                      bgphoto={makeImagePath(
-                        tv.backdrop_path || tv.poster_path,
-                        "w500"
-                      )}
-                    >
-                      <Info variants={infoVariants}>
-                        <h4>{tv.name}</h4>
-                      </Info>
-                    </Box>
-                  ))}
-              </Row>
-              <SlideButton
-                key="rightButton"
-                isLeft={false}
-                onClick={() => changeIndex(false, POPULAR)}
-              >
-                <FontAwesomeIcon icon={faChevronRight} size="2x" />
-              </SlideButton>
-            </AnimatePresence>
-          </Slider>
+          <Slider
+            category={TV}
+            dataTitle="Popular TV Shows"
+            toggleLeaving={toggleLeaving}
+            goingBack={goingBack}
+            changeIndex={changeIndex}
+            dataType={POPULAR}
+            index={indexPopular}
+            data={popular}
+            offset={offset}
+            onBoxClicked={onBoxClicked}
+          />
 
           <AnimatePresence>
             {bigTvMatch ? (
