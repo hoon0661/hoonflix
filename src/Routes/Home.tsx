@@ -72,7 +72,7 @@ const UPCOMING = "upcoming";
 const MOVIE = "movie";
 function Home() {
   const history = useHistory();
-  const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movies/:movieId");
+  const bigMovieMatch = useRouteMatch<{ movieId: string }>("/movie/:movieId");
   const { data: nowPlaying, isLoading: isLoadingNowPlaying } =
     useQuery<IGetMoviesResult>(["movie", "nowPlaying"], getMoviesNowPlaying);
 
@@ -157,7 +157,7 @@ function Home() {
   const toggleLeaving = () => setLeaving((prev) => !prev);
   const onBoxClicked = (movieId?: number, dataType?: string) => {
     setDataType(dataType || "");
-    history.push(`/movies/${movieId}`);
+    history.push(`/movie/${movieId}`);
   };
 
   const onOverlayClick = () => history.push("/");
@@ -245,7 +245,12 @@ function Home() {
                   style={{ top: scrollY.get() + 100 }}
                   layoutId={bigMovieMatch.params.movieId + dataType}
                 >
-                  {clickedMovie && <MovieDetail contentId={clickedMovie} />}
+                  {clickedMovie && (
+                    <MovieDetail
+                      contentId={clickedMovie}
+                      onBoxClicked={onBoxClicked}
+                    />
+                  )}
                 </BigMovie>
               </>
             ) : null}

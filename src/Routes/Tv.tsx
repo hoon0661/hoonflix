@@ -65,6 +65,7 @@ const BigMovie = styled(motion.div)`
   margin: 0 auto;
   border-radius: 15px;
   overflow-y: auto;
+  overflow-x: hidden;
   background-color: ${(props) => props.theme.black.lighter};
 `;
 
@@ -245,7 +246,12 @@ function Tv() {
                   style={{ top: scrollY.get() + 100 }}
                   layoutId={bigTvMatch.params.tvId + dataType}
                 >
-                  {clickedTv && <TvDetail contentId={clickedTv} />}
+                  {clickedTv && (
+                    <TvDetail
+                      contentId={clickedTv}
+                      onBoxClicked={onBoxClicked}
+                    />
+                  )}
                 </BigMovie>
               </>
             ) : null}

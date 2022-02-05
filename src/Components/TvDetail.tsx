@@ -2,7 +2,6 @@ import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { motion } from "framer-motion";
 import { useQuery } from "react-query";
-import { useRouteMatch } from "react-router-dom";
 import styled from "styled-components";
 import {
   getSimilarTvs,
@@ -126,8 +125,7 @@ const boxVariants = {
     scale: 1,
   },
   hover: {
-    scale: 1.2,
-    y: -40,
+    scale: 1.1,
     transition: {
       delay: 0.5,
       duaration: 0.1,
@@ -149,18 +147,19 @@ const infoVariants = {
 
 const TvDetail = (props: any) => {
   const { data, isLoading } = useQuery<IGetTvDetail>(
-    ["content", "detail"],
+    ["content", "detail", props.contentId],
     () => getTvDetail(props.contentId)
   );
 
   const { data: videos, isLoading: isVideosLoading } = useQuery<IGetVideos>(
-    ["content", "videos"],
+    ["content", "videos", props.contentId],
     () => getVideoForTv(props.contentId)
   );
 
   const { data: similar, isLoading: isSimilarLoading } =
-    useQuery<IGetSimilarTvsResult>(["content", "similar"], () =>
-      getSimilarTvs(props.contentId)
+    useQuery<IGetSimilarTvsResult>(
+      ["content", "similar", props.contentId],
+      () => getSimilarTvs(props.contentId)
     );
 
   let embedId = "";
@@ -237,6 +236,7 @@ const TvDetail = (props: any) => {
             <SimilarContents>
               {similar?.results.slice(0, 6).map((item) => (
                 <SimilarContentBox
+                  onClick={() => props.onBoxClicked(item.id, "tv")}
                   variants={boxVariants}
                   whileHover="hover"
                   initial="normal"

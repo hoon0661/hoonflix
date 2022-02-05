@@ -107,7 +107,7 @@ interface IForm {
 
 function Header() {
   const homeMatch = useRouteMatch("/");
-  const movieMatch = useRouteMatch("/movies");
+  const movieMatch = useRouteMatch("/movie");
   const tvMatch = useRouteMatch("/tv");
   const [searchOpen, setSearchOpen] = useState(false);
   const inputAnimation = useAnimation();
@@ -129,7 +129,7 @@ function Header() {
         navAnimation.start("top");
       }
     });
-  }, [scrollY]);
+  }, [scrollY, navAnimation]);
   const history = useHistory();
   const { register, handleSubmit } = useForm<IForm>();
   const onValid = (data: IForm) => {

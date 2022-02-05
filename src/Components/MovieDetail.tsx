@@ -124,8 +124,7 @@ const boxVariants = {
     scale: 1,
   },
   hover: {
-    scale: 1.2,
-    y: -40,
+    scale: 1.1,
     transition: {
       delay: 0.5,
       duaration: 0.1,
@@ -147,18 +146,19 @@ const infoVariants = {
 
 const MovieDetail = (props: any) => {
   const { data, isLoading } = useQuery<IGetMovieDetail>(
-    ["content", "detail"],
+    ["content", "detail", props.contentId],
     () => getMovieDetail(props.contentId)
   );
 
   const { data: videos, isLoading: isVideosLoading } = useQuery<IGetVideos>(
-    ["content", "videos"],
+    ["content", "videos", props.contentId],
     () => getVideoForMovie(props.contentId)
   );
 
   const { data: similar, isLoading: isSimilarLoading } =
-    useQuery<IGetSimilarMoviesResult>(["content", "similar"], () =>
-      getSimilarMovies(props.contentId)
+    useQuery<IGetSimilarMoviesResult>(
+      ["content", "similar", props.contentId],
+      () => getSimilarMovies(props.contentId)
     );
 
   let embedId = "";
@@ -178,7 +178,19 @@ const MovieDetail = (props: any) => {
         <Loader>Loading...</Loader>
       ) : (
         <>
-          <YoutubeEmbed embedId={embedId} />
+          {embedId ? (
+            <YoutubeEmbed embedId={embedId} />
+          ) : (
+            <BigCover
+              key={props.contentId}
+              style={{
+                backgroundImage: `linear-gradient(to top, black, transparent), url(${makeImagePath(
+                  data?.backdrop_path || data?.poster_path || "",
+                  "w500"
+                )})`,
+              }}
+            />
+          )}
           <BigTitle>
             <a href={data?.homepage} target="_blank">
               {data?.title}
@@ -217,6 +229,7 @@ const MovieDetail = (props: any) => {
             <SimilarContents>
               {similar?.results.slice(0, 6).map((item) => (
                 <SimilarContentBox
+                  onClick={() => props.onBoxClicked(item.id, "movie")}
                   variants={boxVariants}
                   whileHover="hover"
                   initial="normal"
