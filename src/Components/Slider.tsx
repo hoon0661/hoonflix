@@ -38,6 +38,7 @@ const SlideButton = styled.div<{ isLeft: boolean }>`
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 100;
   cursor: pointer;
   &:hover {
     color: ${(props) => props.theme.black.lighter};

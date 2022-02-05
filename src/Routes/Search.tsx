@@ -49,6 +49,7 @@ const Card = styled(motion.div)<{ bgphoto: string }>`
   background-size: cover;
   background-position: center;
   cursor: pointer;
+  border-radius: 20px;
 `;
 
 const Info = styled(motion.div)`
