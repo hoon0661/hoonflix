@@ -119,24 +119,28 @@ function Search() {
   const history = useHistory();
   const { scrollY } = useViewportScroll();
   const keyword = new URLSearchParams(location.search).get("keyword");
-  const bigMovieMatch = useRouteMatch<{ contentId: string; type: string }>(
-    "/search/:type/:contentId"
-  );
-  const bigTvMatch = useRouteMatch<{ contentId: string }>(
-    "/search/:type/:contentId"
-  );
+  const bigMovieMatch =
+    useRouteMatch<{ contentId: string }>("/movie/:contentId");
+  const bigTvMatch = useRouteMatch<{ contentId: string }>("/tv/:contentId");
   const { data, isLoading } = useQuery<IGetSearchResults>(
     ["searchResults", keyword],
-    () => getSearchResults(keyword || "")
+    () => getSearchResults(keyword || undefined)
   );
 
-  const onBoxClicked = (contentId: string, type: string) => {
+  const onBoxClicked = (contentId: number, type: string) => {
     history.push(`/${type}/${contentId}`);
   };
 
   const onOverlayClick = () => {
     history.goBack();
   };
+
+  const clickedContent =
+    bigMovieMatch?.params.contentId || bigTvMatch?.params.contentId;
+
+  const contents = data?.results.filter(
+    (item) => item.media_type === TV || item.media_type === MOVIE
+  );
 
   return (
     <Wrapper>
@@ -146,7 +150,7 @@ function Search() {
         <>
           <BoxArea>
             <Cards>
-              {data?.results?.slice(0, 14).map((content) => (
+              {contents?.slice(0, 14).map((content) => (
                 <Card
                   layoutId={content.id + ""}
                   key={content.id}
@@ -158,9 +162,7 @@ function Search() {
                   initial="normal"
                   whileHover="hover"
                   transition={{ type: "tween" }}
-                  onClick={() =>
-                    onBoxClicked(content.id + "", content.media_type)
-                  }
+                  onClick={() => onBoxClicked(content.id, content.media_type)}
                 >
                   <Info variants={infoVariants}>
                     <h4>{content.title || content.name}</h4>
@@ -179,16 +181,13 @@ function Search() {
                 />
                 <BigMovie
                   style={{ top: scrollY.get() + 100 }}
-                  layoutId={
-                    bigMovieMatch?.params.contentId ||
-                    bigTvMatch?.params.contentId
-                  }
+                  layoutId={clickedContent}
                 >
-                  {bigMovieMatch && (
-                    <MovieDetail contentId={bigMovieMatch.params.contentId} />
+                  {clickedContent && bigMovieMatch && (
+                    <MovieDetail contentId={clickedContent} />
                   )}
-                  {bigTvMatch && (
-                    <TvDetail contentId={bigTvMatch.params.contentId} />
+                  {clickedContent && bigTvMatch && (
+                    <TvDetail contentId={clickedContent} />
                   )}
                 </BigMovie>
               </>
