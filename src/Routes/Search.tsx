@@ -119,20 +119,23 @@ function Search() {
   const history = useHistory();
   const { scrollY } = useViewportScroll();
   const keyword = new URLSearchParams(location.search).get("keyword");
-  const bigMovieMatch =
-    useRouteMatch<{ contentId: string }>("/movie/:contentId");
-  const bigTvMatch = useRouteMatch<{ contentId: string }>("/tv/:contentId");
+  const bigMovieMatch = useRouteMatch<{ contentId: string }>(
+    "/search/movie/:contentId"
+  );
+  const bigTvMatch = useRouteMatch<{ contentId: string }>(
+    "/search/tv/:contentId"
+  );
   const { data, isLoading } = useQuery<IGetSearchResults>(
     ["searchResults", keyword],
-    () => getSearchResults(keyword || undefined)
+    () => getSearchResults(keyword || "")
   );
 
   const onBoxClicked = (contentId: number, type: string) => {
-    history.push(`/${type}/${contentId}`);
+    history.push(`/search/${type}/${contentId}?keyword=${keyword}`);
   };
 
   const onOverlayClick = () => {
-    history.goBack();
+    history.push(`/search?keyword=${keyword}`);
   };
 
   const clickedContent =
@@ -183,11 +186,16 @@ function Search() {
                   style={{ top: scrollY.get() + 100 }}
                   layoutId={clickedContent}
                 >
-                  {clickedContent && bigMovieMatch && (
-                    <MovieDetail contentId={clickedContent} />
-                  )}
-                  {clickedContent && bigTvMatch && (
-                    <TvDetail contentId={clickedContent} />
+                  {bigMovieMatch ? (
+                    <MovieDetail
+                      contentId={clickedContent}
+                      onBoxClicked={onBoxClicked}
+                    />
+                  ) : (
+                    <TvDetail
+                      contentId={clickedContent}
+                      onBoxClicked={onBoxClicked}
+                    />
                   )}
                 </BigMovie>
               </>
