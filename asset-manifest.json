@@ -1,0 +1,10 @@
+{
+  "files": {
+    "main.js": "/hoonflix/static/js/main.2fc7f3ab.js",
+    "index.html": "/hoonflix/index.html",
+    "main.2fc7f3ab.js.map": "/hoonflix/static/js/main.2fc7f3ab.js.map"
+  },
+  "entrypoints": [
+    "static/js/main.2fc7f3ab.js"
+  ]
+}
